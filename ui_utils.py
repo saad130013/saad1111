@@ -15,7 +15,7 @@ def to_excel(df):
     processed_data = output.getvalue()
     return processed_data
 
-    def to_pdf(title, df=None, report_data=None):
+def to_pdf(title, df=None, report_data=None):
         """تحويل البيانات إلى ملف PDF في الذاكرة."""
         class PDF(FPDF):
             def header(self):
