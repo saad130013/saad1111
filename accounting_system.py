@@ -1,6 +1,6 @@
 import pandas as pd
 import streamlit as st
-from src.analysis.report_generator import ReportGenerator
+from report_generator import ReportGenerator
 
 class AccountingSystem:
     """
