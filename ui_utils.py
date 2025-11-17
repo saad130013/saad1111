@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
-from fpdf import FPDF, XPos, YPos
+from fpdf import FPDF
 
 def format_currency(value):
     """تنسيق القيمة كعملة بالريال السعودي."""
@@ -16,12 +16,13 @@ def to_excel(df):
     return processed_data
 
 def to_pdf(title, df=None, report_data=None):
-        """تحويل البيانات إلى ملف PDF في الذاكرة."""
-        class PDF(FPDF):
-            def header(self):
-                self.set_font('Arial', 'B', 15)
-                self.cell(0, 10, title, 0, 1, 'C')
-                self.ln(5)
+    """تحويل البيانات إلى ملف PDF في الذاكرة."""
+    
+    class PDF(FPDF):
+        def header(self):
+            self.set_font('Arial', 'B', 15)
+            self.cell(0, 10, title, 0, 1, 'C')
+            self.ln(5)
 
         def footer(self):
             self.set_y(-15)
@@ -72,6 +73,9 @@ def to_pdf(title, df=None, report_data=None):
             else:
                 pdf.chapter_body(f"{section}: {format_currency(items)}")
 
+    # ملاحظة: FPDF لا يدعم اللغة العربية بشكل كامل بدون خطوط مخصصة.
+    # قد تحتاج إلى استخدام مكتبة أخرى أو تثبيت خط يدعم العربية على نظام التشغيل.
+    
     return pdf.output(dest='S').encode('latin-1')
 
 def display_dataframe(title, df):

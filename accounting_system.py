@@ -1,81 +1,81 @@
 import pandas as pd
-import streamlit as st
+import numpy as np
 from report_generator import ReportGenerator
 
 class AccountingSystem:
     """
-    النظام المحاسبي الأساسي الذي يحتوي على منطق إنشاء القيود والتقارير المالية.
+    مسؤول عن تجميع البيانات المصنفة وتوليد التقارير المحاسبية الرئيسية.
     """
     def __init__(self, df):
         self.df = df
-        self.journal_entries = None
         self.report_generator = ReportGenerator(df)
+        self.journal_entries = None
 
     def create_journal_entries(self):
         """
-        إنشاء قيود اليومية (القيد المزدوج) من حركات البنك.
-        الافتراض: البنك هو الحساب المقابل لكل حركة.
+        توليد قيود اليومية من حركات كشف الحساب.
         """
         if self.journal_entries is not None:
-            return pd.DataFrame(self.journal_entries)
+            return self.journal_entries
             
         journal_entries = []
         
-        # التأكد من وجود الأعمدة المطلوبة
-        if not all(col in self.df.columns for col in ['[SA]Processing Date', 'التفاصيل', 'مدين', 'دائن', 'الحساب المحاسبي']):
-            st.error("أعمدة البيانات غير مكتملة لإنشاء قيود اليومية.")
-            return pd.DataFrame()
-
+        # 1. تحديد الحسابات المدينة والدائنة لكل حركة
         for index, row in self.df.iterrows():
+            account = row['الحساب المحاسبي']
+            amount_debit = row['مدين']
+            amount_credit = row['دائن']
+            details = row['التفاصيل']
             date = row['[SA]Processing Date']
-            description = row['التفاصيل']
-            debit = row['مدين']
-            credit = row['دائن']
-            account = row.get('الحساب المحاسبي', 'حسابات متنوعة')
             
-            # الحركة المدينة (سحب من البنك)
-            if debit > 0:
-                entry = {
+            # الحركة المدينة (مصروفات، سحوبات، أصول)
+            if amount_debit > 0:
+                # القيد: [الحساب المصنف] مدين / [البنك] دائن
+                journal_entries.append({
                     'التاريخ': date,
                     'الحساب المدين': account,
-                    'المبلغ المدين': debit,
                     'الحساب الدائن': 'البنك',
-                    'المبلغ الدائن': debit, # يجب أن يكون المبلغ الدائن مساوياً للمبلغ المدين
-                    'الوصف': description
-                }
-                journal_entries.append(entry)
-                
-            # الحركة الدائنة (إيداع في البنك)
-            if credit > 0:
-                entry = {
+                    'المبلغ المدين': amount_debit,
+                    'المبلغ الدائن': amount_debit,
+                    'الوصف': details
+                })
+            
+            # الحركة الدائنة (إيرادات، إيداعات، خصوم)
+            elif amount_credit > 0:
+                # القيد: [البنك] مدين / [الحساب المصنف] دائن
+                journal_entries.append({
                     'التاريخ': date,
                     'الحساب المدين': 'البنك',
-                    'المبلغ المدين': credit, # يجب أن يكون المبلغ المدين مساوياً للمبلغ الدائن
                     'الحساب الدائن': account,
-                    'المبلغ الدائن': credit,
-                    'الوصف': description
-                }
-                journal_entries.append(entry)
-        
-        self.journal_entries = journal_entries
-        journal_df = pd.DataFrame(self.journal_entries)
-        return journal_df
+                    'المبلغ المدين': amount_credit,
+                    'المبلغ الدائن': amount_credit,
+                    'الوصف': details
+                })
+                
+        self.journal_entries = pd.DataFrame(journal_entries)
+        return self.journal_entries
 
     def generate_trial_balance(self):
-        """إنشاء ميزان المراجعة."""
-        if self.journal_entries is None:
-            self.create_journal_entries()
-        
-        return self.report_generator.generate_trial_balance(self.journal_entries)
+        """
+        توليد ميزان المراجعة.
+        """
+        journal_entries = self.create_journal_entries()
+        return self.report_generator.generate_trial_balance(journal_entries)
 
     def generate_income_statement(self):
-        """إنشاء قائمة الدخل."""
+        """
+        توليد قائمة الدخل.
+        """
         return self.report_generator.generate_income_statement()
 
     def generate_cash_flow_statement(self):
-        """إنشاء قائمة التدفقات النقدية."""
+        """
+        توليد قائمة التدفقات النقدية.
+        """
         return self.report_generator.generate_cash_flow_statement()
 
     def generate_balance_sheet(self):
-        """إنشاء الميزانية العمومية."""
+        """
+        توليد الميزانية العمومية.
+        """
         return self.report_generator.generate_balance_sheet()
